@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cuaderno de español · Рабочая тетрадь</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#e4e2dd;--bar:#fff;--ink:#1d1d1b;--acc:#c8102e;--bd:#cfcfcf}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#26262a;--bar:#1b1b1e;--ink:#eee;--bd:#444}}
+:root[data-theme="dark"]{--bg:#26262a;--bar:#1b1b1e;--ink:#eee;--bd:#444}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Frutiger,"Segoe UI",Helvetica,Arial,sans-serif}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bar);border-bottom:1px solid var(--bd);padding:8px 10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.bar button,.ph button{font:inherit;font-size:13px;padding:6px 10px;border:1px solid var(--bd);background:transparent;color:var(--ink);border-radius:6px;cursor:pointer}
+.bar button:hover{border-color:var(--acc)}
+.bar .print{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:700;margin-left:auto}
+.bar span{font-size:12px;opacity:.7}
+.hint{text-align:center;font-size:12px;opacity:.7;margin:10px 8px 0}
+.sheet{width:794px;margin:0 auto 18px}
+.ph{display:flex;justify-content:space-between;align-items:center;padding:6px 2px;font-size:13px}
+.page{position:relative;width:794px;height:1122px;background:#fff;color:#1d1d1b;overflow:hidden;box-shadow:0 2px 12px #0004;font-size:14px;line-height:1.4}
+.foot{position:absolute;bottom:18px;left:50px;right:50px;font-size:11px;color:#777;display:flex;justify-content:space-between;pointer-events:none}
+.el{position:absolute}
+.el.sel{outline:1.5px dashed var(--acc);outline-offset:2px}
+.el [contenteditable]{outline:none}
+.tools{display:none;position:absolute;top:-26px;left:0;background:var(--acc);color:#fff;font-size:12px;border-radius:4px;overflow:hidden;z-index:5;font-family:sans-serif}
+.tools span{padding:3px 8px;cursor:pointer;display:block}.tools .grip{cursor:move;touch-action:none}
+.band .tools{top:4px}
+.sel .tools{display:flex}
+.rz{display:none;position:absolute;right:-7px;bottom:-7px;width:13px;height:13px;background:var(--acc);cursor:nwse-resize;touch-action:none;z-index:5}
+.sel .rz{display:block}
+.band{background:#1d1d1b;color:#fff;font-size:44px;font-weight:800;padding:0 50px;display:flex;align-items:center}
+.band .tx{width:100%}
+.ex{display:flex;gap:10px;align-items:flex-start;font-weight:700;font-size:14.5px}
+.badge{background:#1d1d1b;color:#fff;font-weight:800;font-size:13px;padding:1px 6px;white-space:nowrap;min-width:30px;text-align:center}
+.text .tx{min-height:1em}
+.lines .tx{height:100%;line-height:28px;font-family:"Segoe Print","Bradley Hand","Comic Sans MS",cursive;color:#1c3f8f;font-size:15px;background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='6' height='28'><circle cx='1.5' cy='26' r='.8' fill='%23777'/></svg>") repeat}
+.box{background:#e9e9e9;border:1.5px solid #555;border-radius:14px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:15px}
+.imgbox{width:100%;height:100%;border:1.5px dashed #999;display:flex;align-items:center;justify-content:center;text-align:center;color:#888;font-size:13px;cursor:pointer;background:#f6f6f6;overflow:hidden}
+.imgbox img{width:100%;height:100%;object-fit:contain;display:block}
+@page{size:A4;margin:0}
+@media print{
+ *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ :root{padding:0}body{background:#fff}
+ .bar,.ph,.hint,.tools,.rz{display:none!important}
+ .sheet{zoom:1!important;margin:0;break-after:page}.sheet:last-child{break-after:auto}
+ .page{box-shadow:none}
+ .el.sel{outline:none}
+ .imgbox{border:none;background:none}.imgbox:not(:has(img)){visibility:hidden}
+}
+</style></head><body>
+<div class="bar">
+ <button data-add="band">+ Unidad</button><button data-add="ex">+ Ejercicio</button><button data-add="text">+ Texto</button>
+ <button data-add="lines">+ Líneas</button><button data-add="box">+ Recuadro</button><button data-add="img">+ Imagen</button>
+ <button id="newp">+ Страница</button><span id="st"></span>
+ <button class="print" onclick="window.print()">🖨 Печать</button>
+</div>
+<div class="hint">Нажмите на элемент → потяните за ✥ чтобы переместить, за красный уголок — изменить размер, ✕ — удалить. Фото: клик по рамке, перетаскивание или Ctrl+V. При печати отключите «Колонтитулы».</div>
+<div id="pages" style="margin-top:12px"></div>
+<input type="file" id="file" accept="image/*" hidden>
+<script>
+const KEY='cuaderno_v1',W=794,H=1122,$=s=>document.querySelector(s);
+const uid=()=>Math.random().toString(36).slice(2,9);
+const D={band:{w:W,h:120,html:'Unidad 1'},ex:{w:700,h:34,b:'1.1.',html:'Escribe la instrucción aquí.'},text:{w:700,h:80,html:'Escribe aquí el texto…'},lines:{w:700,h:112,html:''},box:{w:480,h:44,html:'<b>palabra · palabra · palabra</b>'},img:{w:340,h:240,src:''}};
+const S=(t,x,y,o={})=>({id:uid(),t,x,y,...D[t],...o});
+const sample=()=>[[
+ S('band',0,0,{html:'Unidad 3'}),
+ S('ex',50,150,{b:'3.1.',html:'Lee el siguiente texto.'}),
+ S('text',50,190,{h:90,html:'Mi amiga Lucía es alta y delgada. Tiene el pelo largo y rubio, y lleva gafas rojas. Es muy simpática y alegre. Hoy hace calor y lleva una camiseta blanca y un bañador azul.'}),
+ S('ex',50,300,{b:'3.2.',html:'Señala los adjetivos calificativos que encuentres en el texto.'}),
+ S('text',50,336,{h:24,html:'<i>Ejemplo: alta</i>'}),
+ S('lines',50,362,{h:56}),
+ S('ex',50,450,{b:'3.3.',html:'¿Puedes escribir los contrarios de estos adjetivos?'}),
+ S('text',50,488,{h:24,html:'<i>Ejemplo: alto/a → bajo/a</i>'}),
+ S('lines',50,516,{h:140}),
+ S('ex',50,690,{b:'3.4.',html:'Relaciona las palabras con el verbo correspondiente.'}),
+ S('box',150,730,{w:400,html:'<b>Tener · Ser · Llevar</b>'}),
+ S('lines',50,795,{h:168})
+],[
+ S('band',0,0,{html:'Deberes'}),
+ S('ex',50,150,{b:'1.1.',html:'Pega una foto y descríbela.'}),
+ S('img',50,195,{w:694,h:380}),
+ S('lines',50,600,{h:224})
+]];
+let P,cur=0,sel=null,op=null,tm;
+try{P=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!Array.isArray(P))P=sample();
+const E=id=>{for(const p of P)for(const e of p)if(e.id==id)return e};
+function save(){clearTimeout(tm);tm=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(P));$('#st').textContent='✓ сохранено'}catch(e){$('#st').textContent='⚠ не сохраняется (много фото)'}},350)}
+function place(d,e){d.style.left=e.x+'px';d.style.top=e.y+'px';d.style.width=e.w+'px';
+ if(e.t=='ex'||e.t=='text'){d.style.minHeight=e.h+'px'}else d.style.height=e.h+'px'}
+function mk(e){
+ const d=document.createElement('div');d.className='el '+e.t;d.dataset.id=e.id;place(d,e);
+ const ce=(k,c)=>{const n=document.createElement('div');n.className=c;n.contentEditable=true;n.spellcheck=false;n.dataset.k=k;n.innerHTML=e[k]||'';return n};
+ if(e.t=='ex')d.append(ce('b','badge'),ce('html','tx'));
+ else if(e.t=='img'){const b=document.createElement('div');b.className='imgbox';
+  if(e.src){const i=new Image();i.src=e.src;b.append(i)}else b.textContent='Нажмите, перетащите или вставьте фото (Ctrl+V)';d.append(b)}
+ else d.append(ce('html','tx'));
+ d.insertAdjacentHTML('beforeend','<div class="tools"><span class="grip">✥ двигать</span><span class="del">✕</span></div><i class="rz"></i>');
+ return d}
+function render(){
+ const r=$('#pages');r.innerHTML='';
+ P.forEach((pg,i)=>{const s=document.createElement('div');s.className='sheet';
+  s.innerHTML=`<div class="ph"><b>Страница ${i+1}</b><button data-del="${i}">Удалить страницу</button></div><div class="page" data-p="${i}"><div class="foot"><span>Cuaderno de español</span><b>${i+1}</b></div></div>`;
+  const pe=s.querySelector('.page');pg.forEach(e=>pe.append(mk(e)));r.append(s)});
+ fit();mark()}
+function fit(){const z=Math.min(1,(innerWidth-12)/W);document.querySelectorAll('.sheet').forEach(s=>s.style.zoom=z)}
+addEventListener('resize',fit);
+function mark(){document.querySelectorAll('.el').forEach(d=>d.classList.toggle('sel',d.dataset.id==sel))}
+function select(id){sel=id;mark()}
+function remove(id){P.forEach(p=>{const i=p.findIndex(e=>e.id==id);if(i>=0)p.splice(i,1)});sel=null;render();save()}
+function add(t){
+ const pg=P[cur]||P[0],d=D[t];let y=60;
+ pg.forEach(e=>{if(e.t!='band')y=Math.max(y,e.y+e.h+14)});if(t=='band')y=0;else if(y+d.h>H-50)y=60;
+ const e=S(t,t=='band'?0:50,y);
+ if(t=='ex'){const all=P.flat().filter(x=>x.t=='ex').pop(),m=all&&/^(\d+)\.(\d+)/.exec(all.b.replace(/<[^>]+>/g,''));if(m)e.b=m[1]+'.'+(+m[2]+1)+'.'}
+ pg.push(e);render();select(e.id);save()}
+document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>add(b.dataset.add));
+$('#newp').onclick=()=>{P.push([]);cur=P.length-1;render();save();scrollTo({top:document.body.scrollHeight,behavior:'smooth'})};
+const R=$('#pages');
+R.addEventListener('pointerdown',ev=>{
+ const pe=ev.target.closest('.page');if(pe)cur=+pe.dataset.p;
+ const el=ev.target.closest('.el');if(!el){select(null);return}
+ select(el.dataset.id);const e=E(el.dataset.id);
+ if(ev.target.closest('.del')){remove(e.id);return}
+ const m=ev.target.closest('.grip')?'mv':ev.target.closest('.rz')?'rs':null;
+ if(m){op={m,e,el,sc:pe.getBoundingClientRect().width/W,x:ev.clientX,y:ev.clientY,o:{...e}};el.setPointerCapture(ev.pointerId);ev.preventDefault()}});
+R.addEventListener('pointermove',ev=>{if(!op)return;
+ const dx=(ev.clientX-op.x)/op.sc,dy=(ev.clientY-op.y)/op.sc,{e,o}=op;
+ if(op.m=='mv'){e.x=Math.round(Math.min(W-40,Math.max(-o.w+40,o.x+dx)));e.y=Math.round(Math.min(H-20,Math.max(0,o.y+dy)))}
+ else{e.w=Math.round(Math.max(40,o.w+dx));e.h=Math.round(Math.max(20,o.h+dy))}
+ place(op.el,e)});
+R.addEventListener('pointerup',()=>{if(op){op=null;save()}});
+R.addEventListener('input',ev=>{const n=ev.target.closest('[data-k]');if(!n)return;E(n.closest('.el').dataset.id)[n.dataset.k]=n.innerHTML;save()});
+R.addEventListener('click',ev=>{const b=ev.target.closest('[data-del]');
+ if(b){if(b.dataset.a){P.splice(+b.dataset.del,1);if(!P.length)P.push([]);cur=0;render();save()}else{b.dataset.a=1;b.textContent='Точно удалить?';setTimeout(()=>{b.dataset.a='';b.textContent='Удалить страницу'},2500)}return}
+ const ib=ev.target.closest('.imgbox');if(ib){pick=ib.closest('.el').dataset.id;$('#file').click()}});
+R.addEventListener('dblclick',ev=>{const ib=ev.target.closest('.imgbox');if(ib){pick=ib.closest('.el').dataset.id;$('#file').click()}});
+let pick=null;
+function setImg(id,f){if(!f||!f.type.startsWith('image/'))return;const u=URL.createObjectURL(f),i=new Image();
+ i.onload=()=>{const k=Math.min(1,1400/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;
+  const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(i,0,0,c.width,c.height);
+  E(id).src=c.toDataURL('image/jpeg',.85);URL.revokeObjectURL(u);render();select(id);save()};i.src=u}
+$('#file').onchange=e=>{setImg(pick,e.target.files[0]);e.target.value=''};
+R.addEventListener('dragover',ev=>{if(ev.target.closest('.img'))ev.preventDefault()});
+R.addEventListener('drop',ev=>{const el=ev.target.closest('.img');if(el){ev.preventDefault();setImg(el.dataset.id,ev.dataTransfer.files[0])}});
+addEventListener('paste',ev=>{const f=[...(ev.clipboardData?.files||[])].find(f=>f.type.startsWith('image/')),e=sel&&E(sel);
+ if(f&&e&&e.t=='img'){ev.preventDefault();setImg(sel,f);return}
+ if(ev.target.isContentEditable&&!f){ev.preventDefault();document.execCommand('insertText',false,ev.clipboardData.getData('text/plain'))}});
+addEventListener('keydown',ev=>{if((ev.key=='Delete'||ev.key=='Backspace')&&sel&&!document.activeElement?.isContentEditable){ev.preventDefault();remove(sel)}});
+render();
+</script></body></html>
